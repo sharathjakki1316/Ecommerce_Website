@@ -79,7 +79,7 @@ function displayProducts() {
                 <div class="product-card">
 
                     <img
-                        src="../${product.image}"
+                        src="${window.location.pathname.includes('/pages/') ? '../' : ''}${product.image}"
                         alt="${product.name}"
                     >
 
