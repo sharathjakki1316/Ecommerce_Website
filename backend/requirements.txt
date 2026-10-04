@@ -80,3 +80,4 @@ websockets==16.0
 yfinance==1.2.0
 gunicorn 
 Flask 
+Flask-CORS 
