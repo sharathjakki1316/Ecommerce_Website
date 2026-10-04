@@ -81,3 +81,4 @@ yfinance==1.2.0
 gunicorn 
 Flask 
 Flask-CORS 
+psycopg2-binary 
