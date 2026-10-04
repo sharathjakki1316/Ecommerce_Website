@@ -44,8 +44,7 @@ const products = [
 const productContainer =
     document.getElementById("productContainer");
 
-
-function displayProducts() {
+async function displayProducts() {
 
     const productContainer =
         document.getElementById("productContainer");
@@ -54,59 +53,59 @@ function displayProducts() {
         return;
     }
 
+    try {
 
-    // Get products added by admin
+        const response =
+            await fetch("http://127.0.0.1:5000/api/products");
 
-    const adminProducts =
-        JSON.parse(
-            localStorage.getItem("shopEaseProducts")
-        ) || [];
+        const backendProducts =
+            await response.json();
 
+        productContainer.innerHTML =
+            backendProducts.map(function (product) {
 
-    // Combine original products and admin products
+                return `
 
-    const allProducts = [
-        ...products,
-        ...adminProducts
-    ];
+                    <div class="product-card">
 
+                        <img
+                            src="${window.location.pathname.includes('/pages/') ? '../images/' : 'images/'}${product.image}"
+                            alt="${product.name}"
+                        >
 
-    productContainer.innerHTML =
-        allProducts.map(function (product) {
+                        <h3>
+                            <a href="${window.location.pathname.includes('/pages/') ? 'product.html' : 'pages/product.html'}?id=${product.id}">
+                                ${product.name}
+                            </a>
+                        </h3>
 
-            return `
+                        <p>
+                            ${product.description}
+                        </p>
 
-                <div class="product-card">
+                        <div class="product-price">
+                            ₹${product.price}
+                        </div>
 
-                    <img
-                        src="${window.location.pathname.includes('/pages/') ? '../' : ''}${product.image}"
-                        alt="${product.name}"
-                    >
+                        <button
+                            onclick="addToCart(${product.id})">
+                            Add to Cart
+                        </button>
 
-                    <h3>
-                        <a href="product.html?id=${product.id}">
-                            ${product.name}
-                        </a>
-                    </h3>
-
-                    <p>
-                        ${product.description}
-                    </p>
-
-                    <div class="product-price">
-                        ₹${product.price}
                     </div>
 
-                    <button
-                        onclick="addToCart(${product.id})">
-                        Add to Cart
-                    </button>
+                `;
 
-                </div>
+            }).join("");
 
-            `;
+    } catch (error) {
 
-        }).join("");
+        console.error(
+            "Failed to load products from backend:",
+            error
+        );
+
+    }
 }
 
 
@@ -114,62 +113,81 @@ function displayProducts() {
 // Add to Cart
 // ======================================
 
-function addToCart(productId) {
+async function addToCart(productId) {
 
-    // Get products added by admin
+    const loggedIn =
+        localStorage.getItem("shopEaseLoggedIn");
 
-    const adminProducts =
-        JSON.parse(
-            localStorage.getItem("shopEaseProducts")
-        ) || [];
+    if (loggedIn !== "true") {
 
+        alert("Please login before adding products to cart.");
 
-    // Combine original and admin products
-
-    const allProducts = [
-        ...products,
-        ...adminProducts
-    ];
-
-
-    // Find selected product
-
-    const product =
-        allProducts.find(function (item) {
-
-            return item.id === productId;
-
-        });
-
-
-    if (!product) {
-
-        alert(
-            "Product not found."
-        );
+        window.location.href =
+            "login.html";
 
         return;
     }
 
-
-    let cart =
+    const user =
         JSON.parse(
-            localStorage.getItem("shopEaseCart")
-        ) || [];
+            localStorage.getItem("shopEaseUser")
+        );
 
+    if (!user) {
 
-    cart.push(product);
+        alert("User information not found. Please login again.");
 
+        return;
+    }
 
-    localStorage.setItem(
-        "shopEaseCart",
-        JSON.stringify(cart)
-    );
+    try {
 
+        const response =
+            await fetch(
+                "http://127.0.0.1:5000/api/cart",
+                {
+                    method: "POST",
 
-    alert(
-        product.name + " added to cart!"
-    );
+                    headers: {
+                        "Content-Type": "application/json"
+                    },
+
+                    body: JSON.stringify({
+                        user_id: user.id,
+                        product_id: productId
+                    })
+                }
+            );
+
+        const result =
+            await response.json();
+
+        if (!response.ok) {
+
+            throw new Error(
+                result.message ||
+                "Failed to add product to cart"
+            );
+
+        }
+
+        alert(
+            "Product added to cart!"
+        );
+
+    } catch (error) {
+
+        console.error(
+            "Add to cart error:",
+            error
+        );
+
+        alert(
+            "Failed to add product to cart. Please check the backend."
+        );
+
+    }
+
 }
 
 
@@ -185,12 +203,11 @@ displayProducts();
 const registerForm =
     document.getElementById("registerForm");
 
-
 if (registerForm) {
 
     registerForm.addEventListener(
         "submit",
-        function (event) {
+        async function (event) {
 
             event.preventDefault();
 
@@ -203,27 +220,56 @@ if (registerForm) {
             const password =
                 document.getElementById("password").value;
 
+            try {
 
-            const user = {
-                name: name,
-                email: email,
-                password: password
-            };
+                const response =
+                    await fetch(
+                        "http://127.0.0.1:5000/api/register",
+                        {
+                            method: "POST",
 
+                            headers: {
+                                "Content-Type": "application/json"
+                            },
 
-            localStorage.setItem(
-                "shopEaseUser",
-                JSON.stringify(user)
-            );
+                            body: JSON.stringify({
+                                name: name,
+                                email: email,
+                                password: password
+                            })
+                        }
+                    );
 
+                const result =
+                    await response.json();
 
-            alert(
-                "Registration successful!"
-            );
+                if (!response.ok) {
 
+                    throw new Error(
+                        result.message
+                    );
 
-            registerForm.reset();
+                }
 
+                alert(
+                    "Registration successful!"
+                );
+
+                registerForm.reset();
+
+            } catch (error) {
+
+                console.error(
+                    "Registration error:",
+                    error
+                );
+
+                alert(
+                    error.message ||
+                    "Registration failed. Please check the backend."
+                );
+
+            }
         }
     );
 
@@ -235,12 +281,11 @@ if (registerForm) {
 const loginForm =
     document.getElementById("loginForm");
 
-
 if (loginForm) {
 
     loginForm.addEventListener(
         "submit",
-        function (event) {
+        async function (event) {
 
             event.preventDefault();
 
@@ -250,31 +295,45 @@ if (loginForm) {
             const password =
                 document.getElementById("loginPassword").value;
 
+            try {
 
-            const savedUser =
-                JSON.parse(
-                    localStorage.getItem("shopEaseUser")
-                );
+                const response =
+                    await fetch(
+                        "http://127.0.0.1:5000/api/login",
+                        {
+                            method: "POST",
 
+                            headers: {
+                                "Content-Type": "application/json"
+                            },
 
-            if (!savedUser) {
+                            body: JSON.stringify({
+                                email: email,
+                                password: password
+                            })
+                        }
+                    );
 
-                alert(
-                    "No registered user found. Please register first."
-                );
+                const result =
+                    await response.json();
 
-                return;
-            }
+                if (!response.ok) {
 
+                    throw new Error(
+                        result.message ||
+                        "Invalid email or password."
+                    );
 
-            if (
-                email === savedUser.email &&
-                password === savedUser.password
-            ) {
+                }
 
                 localStorage.setItem(
                     "shopEaseLoggedIn",
                     "true"
+                );
+
+                localStorage.setItem(
+                    "shopEaseUser",
+                    JSON.stringify(result.user)
                 );
 
                 alert(
@@ -284,14 +343,19 @@ if (loginForm) {
                 window.location.href =
                     "../index.html";
 
-            } else {
+            } catch (error) {
+
+                console.error(
+                    "Login error:",
+                    error
+                );
 
                 alert(
-                    "Invalid email or password."
+                    error.message ||
+                    "Login failed. Please check the backend."
                 );
 
             }
-
         }
     );
 
@@ -304,188 +368,259 @@ const cartContainer =
     document.getElementById("cartContainer");
 
 
-function displayCart() {
+async function displayCart() {
+    console.log("displayCart function is running");
+
+    const cartContainer =
+        document.getElementById("cartContainer");
 
     if (!cartContainer) {
         return;
     }
 
-    let cart =
-        JSON.parse(
-            localStorage.getItem("shopEaseCart")
-        ) || [];
+    const loggedIn =
+        localStorage.getItem("shopEaseLoggedIn");
 
-
-    // Remove invalid old cart products
-
-    cart = cart.filter(function (product) {
-
-        return product &&
-               product.id &&
-               product.name &&
-               product.price !== undefined;
-
-    });
-
-
-    // Save cleaned cart
-
-    localStorage.setItem(
-        "shopEaseCart",
-        JSON.stringify(cart)
-    );
-
-
-    cartContainer.innerHTML = "";
-
-
-    if (cart.length === 0) {
+    if (loggedIn !== "true") {
 
         cartContainer.innerHTML = `
             <p>
-                Your cart is empty.
+                Please login to view your cart.
             </p>
         `;
 
         return;
     }
 
+    const user =
+        JSON.parse(
+            localStorage.getItem("shopEaseUser")
+        );
 
-    let total = 0;
+    if (!user) {
+
+        cartContainer.innerHTML = `
+            <p>
+                User information not found.
+            </p>
+        `;
+
+        return;
+    }
+
+    try {
+
+        const response =
+            await fetch(
+                "http://127.0.0.1:5000/api/cart/" +
+                user.id
+            );
+
+        const cartItems =
+            await response.json();
+
+        if (!response.ok) {
+
+            throw new Error(
+                "Failed to load cart"
+            );
+
+        }
+
+        if (cartItems.length === 0) {
+
+            cartContainer.innerHTML = `
+                <p>
+                    Your cart is empty.
+                </p>
+            `;
+
+            return;
+        }
+
+        cartContainer.innerHTML =
+            cartItems.map(function (item) {
+
+                return `
+
+                    <div class="product-card">
+
+                        <img
+                            src="../images/${item.image}"
+                            alt="${item.name}"
+                        >
+
+                        <h3>
+                            ${item.name}
+                        </h3>
+
+                        <p>
+                            ${item.description}
+                        </p>
+
+                        <div class="product-price">
+                            ₹${item.price}
+                        </div>
+
+                        <p>
+                            Quantity: ${item.quantity}
+                        </p>
+
+                        <button
+                            onclick="removeFromCart(${item.id})">
+                            Remove
+                        </button>
+
+                    </div>
+
+                `;
+
+            }).join("");
+        const total =
+            cartItems.reduce(function (sum, item) {
+
+                return sum +
+                    (Number(item.price) *
+                     Number(item.quantity));
+
+            }, 0);
 
 
-    cart.forEach(function (product) {
-
-        total += Number(product.price);
-
-
-        const cartItem =
+        const totalElement =
             document.createElement("div");
 
 
-        cartItem.classList.add(
-            "product-card"
+        totalElement.classList.add(
+            "cart-total"
         );
 
 
-        cartItem.innerHTML = `
-
-            <img
-                src="../${product.image}"
-                alt="${product.name}"
-            >
+        totalElement.innerHTML = `
 
             <h3>
-                ${product.name}
+                Total: ₹${total}
             </h3>
 
-            <p>
-                ${product.description}
-            </p>
-
-            <div class="product-price">
-                ₹${product.price}
-            </div>
-
             <button
-                onclick="removeFromCart(${product.id})">
-                Remove
+                onclick="goToCheckout()">
+                Proceed to Checkout
             </button>
 
         `;
 
 
         cartContainer.appendChild(
-            cartItem
+            totalElement
         );
 
-    });
+    } catch (error) {
 
+        console.error(
+            "Failed to load cart:",
+            error
+        );
 
-    const totalElement =
-        document.createElement("div");
+        cartContainer.innerHTML = `
+            <p>
+                Failed to load cart.
+            </p>
+        `;
 
-
-    totalElement.classList.add(
-        "cart-total"
-    );
-
-
-    totalElement.innerHTML = `
-
-        <h3>
-            Total: ₹${total}
-        </h3>
-
-        <button
-            onclick="goToCheckout()">
-            Proceed to Checkout
-        </button>
-
-    `;
-
-
-    cartContainer.appendChild(
-        totalElement
-    );
+    }
 
 }
 
+console.log("Calling displayCart...");
 displayCart();
 
 // ======================================
 // Remove Product From Cart
 // ======================================
-function removeFromCart(productId) {
+async function removeFromCart(cartId) {
 
-    let cart =
-        JSON.parse(
-            localStorage.getItem("shopEaseCart")
-        ) || [];
+    try {
 
+        const response =
+            await fetch(
+                "http://127.0.0.1:5000/api/cart/" + cartId,
+                {
+                    method: "DELETE"
+                }
+            );
 
-    cart = cart.filter(function (product) {
+        const result =
+            await response.json();
 
-        return String(product.id) !== String(productId);
+        if (!response.ok) {
 
-    });
+            throw new Error(
+                result.message ||
+                "Failed to remove product"
+            );
 
+        }
 
-    localStorage.setItem(
-        "shopEaseCart",
-        JSON.stringify(cart)
-    );
+        alert(
+            "Product removed from cart!"
+        );
 
+        displayCart();
 
-    displayCart();
+    } catch (error) {
+
+        console.error(
+            "Remove from cart error:",
+            error
+        );
+
+        alert(
+            "Failed to remove product from cart."
+        );
+
+    }
 
 }
+
+// ======================================
+// Go To Checkout
+// ======================================
+
 // ======================================
 // Go To Checkout
 // ======================================
 
 function goToCheckout() {
 
-    const cart =
-        JSON.parse(
-            localStorage.getItem("shopEaseCart")
-        ) || [];
+    const loggedIn =
+        localStorage.getItem("shopEaseLoggedIn");
 
-
-    if (cart.length === 0) {
+    if (loggedIn !== "true") {
 
         alert(
-            "Your cart is empty."
+            "Please login before proceeding to checkout."
         );
 
         return;
     }
 
+    const user =
+        JSON.parse(
+            localStorage.getItem("shopEaseUser")
+        );
+
+    if (!user) {
+
+        alert(
+            "User information not found. Please login again."
+        );
+
+        return;
+    }
 
     window.location.href =
         "order.html";
-
 }
+
 // ======================================
 // Place Order
 // ======================================
@@ -493,23 +628,57 @@ function goToCheckout() {
 const orderForm =
     document.getElementById("orderForm");
 
-
 if (orderForm) {
 
     orderForm.addEventListener(
         "submit",
-        function (event) {
+        async function (event) {
 
             event.preventDefault();
 
+            const loggedIn =
+                localStorage.getItem("shopEaseLoggedIn");
 
-            const cart =
+            if (loggedIn !== "true") {
+
+                alert(
+                    "Please login before placing an order."
+                );
+
+                return;
+            }
+
+
+            const user =
                 JSON.parse(
-                    localStorage.getItem("shopEaseCart")
-                ) || [];
+                    localStorage.getItem("shopEaseUser")
+                );
 
 
-            if (cart.length === 0) {
+            if (!user) {
+
+                alert(
+                    "User information not found. Please login again."
+                );
+
+                return;
+            }
+
+
+            const cartResponse =
+                await fetch(
+                    "http://127.0.0.1:5000/api/cart/" + user.id
+                );
+
+
+            const cartItems =
+                await cartResponse.json();
+
+
+            if (
+                !cartResponse.ok ||
+                cartItems.length === 0
+            ) {
 
                 alert(
                     "Your cart is empty."
@@ -520,71 +689,124 @@ if (orderForm) {
 
 
             const name =
-                document.getElementById("orderName").value;
+                document.getElementById(
+                    "orderName"
+                ).value;
+
 
             const address =
-                document.getElementById("orderAddress").value;
+                document.getElementById(
+                    "orderAddress"
+                ).value;
+
 
             const phone =
-                document.getElementById("orderPhone").value;
+                document.getElementById(
+                    "orderPhone"
+                ).value;
 
 
-            let orders =
-                JSON.parse(
-                    localStorage.getItem("shopEaseOrders")
-                ) || [];
+            try {
+
+                for (const item of cartItems) {
+
+                    const totalPrice =
+                        Number(item.price) *
+                        Number(item.quantity);
 
 
-            const total =
-                cart.reduce(function (sum, product) {
+                    const response =
+                        await fetch(
+                            "http://127.0.0.1:5000/api/orders",
+                            {
+                                method: "POST",
 
-                    return sum + product.price;
+                                headers: {
+                                    "Content-Type":
+                                        "application/json"
+                                },
 
-                }, 0);
+                                body: JSON.stringify({
 
+                                    user_id:
+                                        user.id,
 
-            const order = {
+                                    product_id:
+                                        item.product_id,
 
-                id: Date.now(),
+                                    quantity:
+                                        item.quantity,
 
-                name: name,
+                                    total_price:
+                                        totalPrice,
 
-                address: address,
+                                    customer_name:
+                                        name,
 
-                phone: phone,
+                                    address:
+                                        address,
 
-                products: cart,
+                                    phone:
+                                        phone,
 
-                total: total,
-
-                payment: "Cash on Delivery",
-
-                status: "Order Placed"
-
-            };
-
-
-            orders.push(order);
-
-
-            localStorage.setItem(
-                "shopEaseOrders",
-                JSON.stringify(orders)
-            );
+                                })
+                            }
+                        );
 
 
-            localStorage.removeItem(
-                "shopEaseCart"
-            );
+                    const result =
+                        await response.json();
 
+
+                    if (!response.ok) {
+
+                        throw new Error(
+                            result.message ||
+                            "Failed to place order"
+                        );
+
+                    }
+
+                }
+
+
+            const clearCartResponse =
+                await fetch(
+                    "http://127.0.0.1:5000/api/cart/user/" +
+                    user.id,
+                    {
+                        method: "DELETE"
+                    }
+                );
+
+            if (!clearCartResponse.ok) {
+
+                throw new Error(
+                    "Order placed, but failed to clear cart"
+                );
+            }
 
             alert(
                 "Order placed successfully!"
             );
 
-
             window.location.href =
                 "orders.html";
+
+
+            } catch (error) {
+
+                console.error(
+                    "Place order error:",
+                    error
+                );
+
+
+                alert(
+                    "Failed to place order. Please check the backend."
+                );
+
+            }
 
         }
     );
@@ -597,101 +819,141 @@ if (orderForm) {
 const ordersContainer =
     document.getElementById("ordersContainer");
 
-
-function displayOrders() {
+async function displayOrders() {
 
     if (!ordersContainer) {
         return;
     }
 
+    const loggedIn =
+        localStorage.getItem("shopEaseLoggedIn");
 
-    const orders =
-        JSON.parse(
-            localStorage.getItem("shopEaseOrders")
-        ) || [];
-
-
-    ordersContainer.innerHTML = "";
-
-
-    if (orders.length === 0) {
+    if (loggedIn !== "true") {
 
         ordersContainer.innerHTML = `
             <p>
-                No orders placed yet.
+                Please login to view your orders.
             </p>
         `;
 
         return;
     }
 
+    const user =
+        JSON.parse(
+            localStorage.getItem("shopEaseUser")
+        );
 
-    orders.forEach(function (order) {
+    if (!user) {
 
-        const orderCard =
-            document.createElement("div");
-
-        orderCard.classList.add("product-card");
-
-
-        orderCard.innerHTML = `
-
-            <h3>
-                Order ID: ${order.id}
-            </h3>
-
+        ordersContainer.innerHTML = `
             <p>
-                <strong>Name:</strong>
-                ${order.name}
+                User information not found.
             </p>
-
-            <p>
-                <strong>Address:</strong>
-                ${order.address}
-            </p>
-
-            <p>
-                <strong>Phone:</strong>
-                ${order.phone}
-            </p>
-
-            <p>
-                <strong>Payment:</strong>
-                ${order.payment}
-            </p>
-
-            <p>
-                <strong>Status:</strong>
-                ${order.status}
-            </p>
-
-            <h4>
-                Products
-            </h4>
-
-            ${order.products.map(function (product) {
-
-                return `
-                    <p>
-                        ${product.name} - ₹${product.price}
-                    </p>
-                `;
-
-            }).join("")}
-
-            <h3>
-                Total: ₹${order.total}
-            </h3>
-
         `;
 
+        return;
+    }
 
-        ordersContainer.appendChild(orderCard);
+    try {
 
-    });
+        const response =
+            await fetch(
+                "http://127.0.0.1:5000/api/orders/" +
+                user.id
+            );
 
+        const orders =
+            await response.json();
+
+        if (!response.ok) {
+
+            throw new Error(
+                "Failed to load orders"
+            );
+
+        }
+
+        ordersContainer.innerHTML = "";
+
+        if (orders.length === 0) {
+
+            ordersContainer.innerHTML = `
+                <p>
+                    No orders placed yet.
+                </p>
+            `;
+
+            return;
+        }
+
+        orders.forEach(function (order) {
+
+            const orderCard =
+                document.createElement("div");
+
+            orderCard.classList.add(
+                "product-card"
+            );
+
+            orderCard.innerHTML = `
+
+                <h3>
+                    Order ID: ${order.id}
+                </h3>
+
+                <p>
+                    <strong>Product:</strong>
+                    ${order.name}
+                </p>
+
+                <p>
+                    <strong>Quantity:</strong>
+                    ${order.quantity}
+                </p>
+
+                <p>
+                    <strong>Price:</strong>
+                    ₹${order.total_price}
+                </p>
+
+                <p>
+                    <strong>Payment:</strong>
+                    Cash on Delivery
+                </p>
+
+                <p>
+                    <strong>Status:</strong>
+                    ${order.status}
+                </p>
+
+                <p>
+                    <strong>Order Date:</strong>
+                    ${order.order_date}
+                </p>
+
+            `;
+
+            ordersContainer.appendChild(
+                orderCard
+            );
+
+        });
+
+    } catch (error) {
+
+        console.error(
+            "Failed to load orders:",
+            error
+        );
+
+        ordersContainer.innerHTML = `
+            <p>
+                Failed to load orders.
+            </p>
+        `;
+    }
 }
-
 
 // ======================================
 // Load Orders
@@ -706,7 +968,7 @@ const productDetails =
     document.getElementById("productDetails");
 
 
-function displayProductDetails() {
+async function displayProductDetails() {
 
     if (!productDetails) {
         return;
@@ -719,75 +981,85 @@ function displayProductDetails() {
         ).get("id");
 
 
-    // Get products added by admin
+    try {
 
-    const adminProducts =
-        JSON.parse(
-            localStorage.getItem("shopEaseProducts")
-        ) || [];
-
-
-    // Combine all products
-
-    const allProducts = [
-        ...products,
-        ...adminProducts
-    ];
+        const response =
+            await fetch(
+                "http://127.0.0.1:5000/api/products"
+            );
 
 
-    // Find the selected product
-
-    const product =
-        allProducts.find(function (item) {
-
-            return item.id === Number(productId);
-
-        });
+        const allProducts =
+            await response.json();
 
 
-    if (!product) {
+        const product =
+            allProducts.find(function (item) {
+
+                return item.id === Number(productId);
+
+            });
+
+
+        if (!product) {
+
+            productDetails.innerHTML = `
+                <p>
+                    Product not found.
+                </p>
+            `;
+
+            return;
+        }
+
 
         productDetails.innerHTML = `
-            <p>
-                Product not found.
-            </p>
-        `;
 
-        return;
-    }
+            <div class="product-card">
 
+                <img
+                    src="../images/${product.image}"
+                    alt="${product.name}"
+                >
 
-    productDetails.innerHTML = `
+                <h3>
+                    ${product.name}
+                </h3>
 
-        <div class="product-card">
+                <p>
+                    ${product.description}
+                </p>
 
-            <img
-                src="../${product.image}"
-                alt="${product.name}"
-            >
+                <div class="product-price">
+                    ₹${product.price}
+                </div>
 
-            <h3>
-                ${product.name}
-            </h3>
+                <button
+                    onclick="addToCart(${product.id})">
+                    Add to Cart
+                </button>
 
-            <p>
-                ${product.description}
-            </p>
-
-            <div class="product-price">
-                ₹${product.price}
             </div>
 
-            <button
-                onclick="addToCart(${product.id})">
-                Add to Cart
-            </button>
+        `;
 
-        </div>
 
-    `;
-}
+        } catch (error) {
 
+            console.error(
+                "Failed to load product details:",
+                error
+            );
+
+
+            productDetails.innerHTML = `
+                <p>
+                    Failed to load product details.
+                </p>
+            `;
+
+        }
+    }
 
 displayProductDetails();
 
@@ -820,35 +1092,62 @@ if (adminLoginForm) {
 
     adminLoginForm.addEventListener(
         "submit",
-        function (event) {
+        async function (event) {
 
             event.preventDefault();
 
-
             const email =
-                document.getElementById("adminEmail").value;
+                document.getElementById(
+                    "adminEmail"
+                ).value;
 
             const password =
-                document.getElementById("adminPassword").value;
+                document.getElementById(
+                    "adminPassword"
+                ).value;
 
+            try {
 
-            // Demo admin credentials
+                const response =
+                    await fetch(
+                        "http://127.0.0.1:5000/api/admin/login",
+                        {
+                            method: "POST",
 
-            const adminEmail =
-                "admin@shopease.com";
+                            headers: {
+                                "Content-Type":
+                                    "application/json"
+                            },
 
-            const adminPassword =
-                "admin123";
+                            body: JSON.stringify({
+                                email: email,
+                                password: password
+                            })
+                        }
+                    );
 
+                const result =
+                    await response.json();
 
-            if (
-                email === adminEmail &&
-                password === adminPassword
-            ) {
+                if (!response.ok) {
+
+                    throw new Error(
+                        result.message ||
+                        "Invalid admin email or password"
+                    );
+
+                }
 
                 localStorage.setItem(
                     "shopEaseAdminLoggedIn",
                     "true"
+                );
+
+                localStorage.setItem(
+                    "shopEaseAdmin",
+                    JSON.stringify(
+                        result.admin
+                    )
                 );
 
                 alert(
@@ -858,18 +1157,23 @@ if (adminLoginForm) {
                 window.location.href =
                     "admin-dashboard.html";
 
-            } else {
+            } catch (error) {
 
-                alert(
-                    "Invalid admin email or password."
+                console.error(
+                    "Admin login error:",
+                    error
                 );
 
+                alert(
+                    error.message ||
+                    "Admin login failed."
+                );
             }
-
         }
     );
 
 }
+
 // ======================================
 // Admin - Add Product
 // ======================================
@@ -881,7 +1185,7 @@ if (addProductForm) {
 
     addProductForm.addEventListener(
         "submit",
-        function (event) {
+        async function (event) {
 
             event.preventDefault();
 
@@ -900,42 +1204,61 @@ if (addProductForm) {
                 document.getElementById("productDescription").value;
 
 
-            const adminProducts =
-                JSON.parse(
-                    localStorage.getItem("shopEaseProducts")
-                ) || [];
+            try {
+
+                const response =
+                    await fetch(
+                        "http://127.0.0.1:5000/api/products",
+                        {
+                            method: "POST",
+
+                            headers: {
+                                "Content-Type": "application/json"
+                            },
+
+                            body: JSON.stringify({
+                                name: name,
+                                price: price,
+                                image: image,
+                                description: description
+                            })
+                        }
+                    );
 
 
-            const newProduct = {
-
-                id: Date.now(),
-
-                name: name,
-
-                price: price,
-
-                image: image,
-
-                description: description
-
-            };
+                const result =
+                    await response.json();
 
 
-            adminProducts.push(newProduct);
+                if (!response.ok) {
+
+                    throw new Error(
+                        result.message || "Failed to add product"
+                    );
+
+                }
 
 
-            localStorage.setItem(
-                "shopEaseProducts",
-                JSON.stringify(adminProducts)
-            );
+                alert(
+                    "Product added successfully!"
+                );
 
 
-            alert(
-                "Product added successfully!"
-            );
+                addProductForm.reset();
 
 
-            addProductForm.reset();
+            } catch (error) {
+
+                console.error(
+                    "Error adding product:",
+                    error
+                );
+
+                alert(
+                    "Failed to add product. Please check the backend."
+                );
+
+            }
 
         }
     );
@@ -947,96 +1270,235 @@ if (addProductForm) {
 
 const adminOrdersContainer =
     document.getElementById("adminOrdersContainer");
-
-function displayAdminOrders() {
+    
+async function displayAdminOrders() {
 
     if (!adminOrdersContainer) {
         return;
     }
 
-    const orders =
-        JSON.parse(
-            localStorage.getItem("shopEaseOrders")
-        ) || [];
+    try {
 
+        const response =
+            await fetch(
+                "https://ecommerce-website-gzq1.onrender.com"
+            );
 
-    if (orders.length === 0) {
+        const orders =
+            await response.json();
+
+        if (!response.ok) {
+
+            throw new Error(
+                "Failed to load orders"
+            );
+
+        }
+
+        adminOrdersContainer.innerHTML = "";
+
+        if (orders.length === 0) {
+
+            adminOrdersContainer.innerHTML = `
+                <div class="product-card">
+
+                    <h2>
+                        No Orders Found
+                    </h2>
+
+                    <p>
+                        No customer orders have been placed yet.
+                    </p>
+
+                </div>
+            `;
+
+            return;
+        }
+
+        orders.forEach(function (order, index) {
+
+            const orderCard =
+                document.createElement("div");
+
+            orderCard.classList.add(
+                "product-card"
+            );
+
+            orderCard.innerHTML = `
+
+                <h2>
+                    Order #${index + 1}
+                </h2>
+
+                <p>
+                    <strong>Order ID:</strong>
+                    ${order.id}
+                </p>
+
+                <p>
+                    <strong>Customer Name:</strong>
+                    ${order.customer_name}
+                </p>
+
+                <p>
+                    <strong>Email:</strong>
+                    ${order.customer_email}
+                </p>
+
+                <p>
+                    <strong>Address:</strong>
+                    ${order.address || "Not provided"}
+                </p>
+
+                <p>
+                    <strong>Phone:</strong>
+                    ${order.phone || "Not provided"}
+                </p>
+
+                <p>
+                    <strong>Product:</strong>
+                    ${order.product_name}
+                </p>
+
+                <p>
+                    <strong>Quantity:</strong>
+                    ${order.quantity}
+                </p>
+
+                <p>
+                    <strong>Total:</strong>
+                    ₹${order.total_price}
+                </p>
+
+                <p>
+                    <strong>Payment:</strong>
+                    ${order.payment_method || "Cash on Delivery"}
+                </p>
+
+                <p>
+                    <strong>Status:</strong>
+
+                    <select
+                        onchange="updateOrderStatus(${order.id}, this.value)"
+                    >
+
+                        <option value="Placed"
+                            ${order.status === "Placed" ? "selected" : ""}>
+                            Placed
+                        </option>
+
+                        <option value="Processing"
+                            ${order.status === "Processing" ? "selected" : ""}>
+                            Processing
+                        </option>
+
+                        <option value="Shipped"
+                            ${order.status === "Shipped" ? "selected" : ""}>
+                            Shipped
+                        </option>
+
+                        <option value="Delivered"
+                            ${order.status === "Delivered" ? "selected" : ""}>
+                            Delivered
+                        </option>
+
+                    </select>
+                </p>
+
+                <p>
+                    <strong>Order Date:</strong>
+                    ${order.order_date}
+                </p>
+
+            `;
+
+            adminOrdersContainer.appendChild(
+                orderCard
+            );
+
+        });
+
+    } catch (error) {
+
+        console.error(
+            "Failed to load admin orders:",
+            error
+        );
 
         adminOrdersContainer.innerHTML = `
             <div class="product-card">
 
                 <h2>
-                    No Orders Found
+                    Failed to Load Orders
                 </h2>
 
                 <p>
-                    No customer orders have been placed yet.
+                    Please check whether the backend server is running.
                 </p>
 
             </div>
         `;
-
-        return;
     }
-
-
-    adminOrdersContainer.innerHTML =
-        orders.map(function (order, index) {
-
-            return `
-
-                <div class="product-card">
-
-                    <h2>
-                        Order #${index + 1}
-                    </h2>
-
-                    <p>
-                        <strong>Name:</strong>
-                        ${order.name}
-                    </p>
-
-                    <p>
-                        <strong>Address:</strong>
-                        ${order.address}
-                    </p>
-
-                    <p>
-                        <strong>Phone:</strong>
-                        ${order.phone}
-                    </p>
-
-                    <p>
-                        <strong>Payment:</strong>
-                        Cash on Delivery
-                    </p>
-
-                    <h3>
-                        Ordered Products
-                    </h3>
-
-                    ${
-                        order.products.map(function (product) {
-
-                            return `
-                                <p>
-                                    ${product.name}
-                                    — ₹${product.price}
-                                </p>
-                            `;
-
-                        }).join("")
-                    }
-
-                </div>
-
-            `;
-
-        }).join("");
 }
 
 
 displayAdminOrders();
+
+async function updateOrderStatus(orderId, status) {
+
+    try {
+
+        const response =
+            await fetch(
+                "http://127.0.0.1:5000/api/admin/orders/" +
+                orderId +
+                "/status",
+                {
+                    method: "PUT",
+
+                    headers: {
+                        "Content-Type":
+                            "application/json"
+                    },
+
+                    body: JSON.stringify({
+                        status: status
+                    })
+                }
+            );
+
+        const result =
+            await response.json();
+
+        if (!response.ok) {
+
+            throw new Error(
+                result.message ||
+                "Failed to update order status"
+            );
+
+        }
+
+        alert(
+            "Order status updated successfully!"
+        );
+
+        displayAdminOrders();
+
+    } catch (error) {
+
+        console.error(
+            "Update order status error:",
+            error
+        );
+
+        alert(
+            "Failed to update order status."
+        );
+    }
+}
+
 // ======================================
 // Admin - View Customers
 // ======================================
@@ -1118,3 +1580,17 @@ function logoutAdmin() {
     window.location.href =
         "admin-login.html";
 }
+async function testBackendConnection() {
+    try {
+        const response = await fetch("http://127.0.0.1:5000/api/products");
+
+        const productsFromBackend = await response.json();
+
+        console.log("Products received from backend:");
+        console.log(productsFromBackend);
+
+    } catch (error) {
+        console.error("Backend connection failed:", error);
+    }
+}
+testBackendConnection();
