@@ -1281,7 +1281,7 @@ async function displayAdminOrders() {
 
         const response =
             await fetch(
-                "https://ecommerce-website-gzq1.onrender.com"
+                "http://127.0.0.1:5000/api/admin/orders"
             );
 
         const orders =
@@ -1451,7 +1451,7 @@ async function updateOrderStatus(orderId, status) {
 
         const response =
             await fetch(
-                "http://127.0.0.1:5000/api/admin/orders/" +
+                "https://ecommerce-website-gzq1.onrender.com" +
                 orderId +
                 "/status",
                 {
