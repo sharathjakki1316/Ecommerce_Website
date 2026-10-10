@@ -56,7 +56,7 @@ async function displayProducts() {
     try {
 
         const response =
-            await fetch("http://127.0.0.1:5000/api/products");
+            await fetch("https://ecommerce-website-gzq1.onrender.com/api/products");
 
         const backendProducts =
             await response.json();
@@ -144,7 +144,7 @@ async function addToCart(productId) {
 
         const response =
             await fetch(
-                "http://127.0.0.1:5000/api/cart",
+                "https://ecommerce-website-gzq1.onrender.com/api/cart",
                 {
                     method: "POST",
 
@@ -224,7 +224,7 @@ if (registerForm) {
 
                 const response =
                     await fetch(
-                        "http://127.0.0.1:5000/api/register",
+                        "https://ecommerce-website-gzq1.onrender.com/api/register",
                         {
                             method: "POST",
 
@@ -299,7 +299,7 @@ if (loginForm) {
 
                 const response =
                     await fetch(
-                        "http://127.0.0.1:5000/api/login",
+                        "https://ecommerce-website-gzq1.onrender.com/api/login",
                         {
                             method: "POST",
 
@@ -412,7 +412,7 @@ async function displayCart() {
 
         const response =
             await fetch(
-                "http://127.0.0.1:5000/api/cart/" +
+                "https://ecommerce-website-gzq1.onrender.com/api/cart/" +
                 user.id
             );
 
@@ -542,7 +542,7 @@ async function removeFromCart(cartId) {
 
         const response =
             await fetch(
-                "http://127.0.0.1:5000/api/cart/" + cartId,
+                "https://ecommerce-website-gzq1.onrender.com/api/cart/" + cartId,
                 {
                     method: "DELETE"
                 }
@@ -667,7 +667,7 @@ if (orderForm) {
 
             const cartResponse =
                 await fetch(
-                    "http://127.0.0.1:5000/api/cart/" + user.id
+                    "https://ecommerce-website-gzq1.onrender.com/api/cart/" + user.id
                 );
 
 
@@ -717,7 +717,7 @@ if (orderForm) {
 
                     const response =
                         await fetch(
-                            "http://127.0.0.1:5000/api/orders",
+                            "https://ecommerce-website-gzq1.onrender.com/api/orders",
                             {
                                 method: "POST",
 
@@ -772,7 +772,7 @@ if (orderForm) {
 
             const clearCartResponse =
                 await fetch(
-                    "http://127.0.0.1:5000/api/cart/user/" +
+                    "https://ecommerce-website-gzq1.onrender.com/api/cart/user/" +
                     user.id,
                     {
                         method: "DELETE"
@@ -859,7 +859,7 @@ async function displayOrders() {
 
         const response =
             await fetch(
-                "http://127.0.0.1:5000/api/orders/" +
+                "https://ecommerce-website-gzq1.onrender.com/api/orders/" +
                 user.id
             );
 
@@ -985,7 +985,7 @@ async function displayProductDetails() {
 
         const response =
             await fetch(
-                "http://127.0.0.1:5000/api/products"
+                "https://ecommerce-website-gzq1.onrender.com/api/products"
             );
 
 
@@ -1110,7 +1110,7 @@ if (adminLoginForm) {
 
                 const response =
                     await fetch(
-                        "http://127.0.0.1:5000/api/admin/login",
+                        "https://ecommerce-website-gzq1.onrender.com/api/admin/login",
                         {
                             method: "POST",
 
@@ -1208,7 +1208,7 @@ if (addProductForm) {
 
                 const response =
                     await fetch(
-                        "http://127.0.0.1:5000/api/products",
+                        "https://ecommerce-website-gzq1.onrender.com/api/products",
                         {
                             method: "POST",
 
@@ -1281,7 +1281,7 @@ async function displayAdminOrders() {
 
         const response =
             await fetch(
-                "http://127.0.0.1:5000/api/admin/orders"
+                "https://ecommerce-website-gzq1.onrender.com/api/admin/orders"
             );
 
         const orders =
@@ -1451,7 +1451,7 @@ async function updateOrderStatus(orderId, status) {
 
         const response =
             await fetch(
-                "https://ecommerce-website-gzq1.onrender.com" +
+                "https://ecommerce-website-gzq1.onrender.com/api/admin/orders/" +
                 orderId +
                 "/status",
                 {
@@ -1582,7 +1582,7 @@ function logoutAdmin() {
 }
 async function testBackendConnection() {
     try {
-        const response = await fetch("http://127.0.0.1:5000/api/products");
+        const response = await fetch("https://ecommerce-website-gzq1.onrender.com/api/products");
 
         const productsFromBackend = await response.json();
 
