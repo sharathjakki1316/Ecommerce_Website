@@ -26,7 +26,7 @@ body {
 
     padding: 18px 60px;
 
-    background-color: #1f2937;
+    background-color: #23c6e7;
     color: white;
 }
 
@@ -276,4 +276,101 @@ footer {
     }
 
 }
-Ecommerce_Website/style.css
+
+/* Centered authentication pages */
+.auth-section {
+    min-height: calc(100vh - 72px);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 40px 20px;
+}
+
+.auth-card {
+    width: 100%;
+    max-width: 440px;
+    padding: 36px;
+    background: #ffffff;
+    border-radius: 16px;
+    box-shadow: 0 10px 35px rgba(0, 0, 0, 0.10);
+}
+
+.auth-card h1 {
+    margin-bottom: 10px;
+    text-align: center;
+    color: #1e293b;
+    font-size: 30px;
+}
+
+.auth-card > p {
+    margin-bottom: 24px;
+    text-align: center;
+    color: #64748b;
+    line-height: 1.5;
+}
+
+.auth-card form label {
+    display: block;
+    margin: 16px 0 7px;
+    font-weight: 600;
+    color: #334155;
+}
+
+.auth-card form input {
+    display: block;
+    width: 100%;
+    padding: 12px 14px;
+    border: 1px solid #cbd5e1;
+    border-radius: 8px;
+    font-size: 15px;
+}
+
+.auth-card form input:focus {
+    outline: none;
+    border-color: #2563eb;
+    box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.12);
+}
+
+.auth-card form button {
+    width: 100%;
+    margin-top: 24px;
+    padding: 13px;
+    border: none;
+    border-radius: 8px;
+    background: #2563eb;
+    color: #ffffff;
+    font-size: 16px;
+    font-weight: bold;
+    cursor: pointer;
+}
+
+.auth-card form button:hover {
+    background: #1d4ed8;
+}
+
+.auth-card .auth-link {
+    margin-top: 22px;
+    margin-bottom: 0;
+    text-align: center;
+    font-size: 14px;
+}
+
+.auth-card .auth-link a {
+    color: #2563eb;
+    text-decoration: none;
+    font-weight: 600;
+}
+
+.auth-card .auth-link a:hover {
+    text-decoration: underline;
+}
+
+@media (max-width: 480px) {
+    .auth-card {
+        padding: 26px 22px;
+    }
+
+    .auth-card h1 {
+        font-size: 26px;
+    }
+}
