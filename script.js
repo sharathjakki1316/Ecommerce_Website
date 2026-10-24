@@ -69,7 +69,7 @@ async function displayProducts() {
                     <div class="product-card">
 
                         <img
-                            src="${window.location.pathname.includes('/pages/') ? '../images/' : 'images/'}${product.image}"
+                            src="${product.image.startsWith('http') ? product.image : (window.location.pathname.includes('/pages/') ? '../images/' : 'images/') + product.image}"
                             alt="${product.name}"
                         >
 
@@ -1106,7 +1106,7 @@ if (adminLoginForm) {
                     "adminPassword"
                 ).value;
 
-            try {
+            try { 
 
                 const response =
                     await fetch(
@@ -1119,6 +1119,7 @@ if (adminLoginForm) {
                                     "application/json"
                             },
 
+
                             body: JSON.stringify({
                                 email: email,
                                 password: password
@@ -1126,16 +1127,20 @@ if (adminLoginForm) {
                         }
                     );
 
-                const result =
-                    await response.json();
+                const responseText = await response.text();
 
-                if (!response.ok) {
+                console.log("HTTP Status:", response.status);
+                console.log("Content Type:", response.headers.get("content-type"));
+                console.log("Server Response:", responseText.slice(0, 500));
 
+                let result;
+
+                try {
+                    result = JSON.parse(responseText);
+                } catch (error) {
                     throw new Error(
-                        result.message ||
-                        "Invalid admin email or password"
+                        "Server returned HTML instead of JSON. Check the browser console."
                     );
-
                 }
 
                 localStorage.setItem(
