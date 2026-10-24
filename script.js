@@ -1018,7 +1018,7 @@ async function displayProductDetails() {
             <div class="product-card">
 
                 <img
-                    src="../images/${product.image}"
+                    src="${product.image.startsWith('http') ? product.image : '../images/' + product.image}"
                     alt="${product.name}"
                 >
 
